@@ -43,6 +43,7 @@ describe('Security Utilities', () => {
 
     it('should reject empty or invalid values', () => {
       expect(isValidGeminiApiKey('')).toBe(false);
+      expect(isValidGeminiApiKey('   ')).toBe(false);
       expect(isValidGeminiApiKey(null as unknown as string)).toBe(false);
     });
   });

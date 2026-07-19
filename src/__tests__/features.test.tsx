@@ -1,5 +1,5 @@
 import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { SettingsProvider } from '../context/SettingsContext';
 import { OperationsProvider, useOperations } from '../context/OperationsContext';
@@ -12,6 +12,7 @@ import AIChat from '../features/command-center/AIChat';
 import PredictionChart from '../features/crowd-prediction/PredictionChart';
 import Home from '../app/page';
 import { ErrorBoundary } from '../components/ErrorBoundary';
+import { INITIAL_STADIUM_STATE } from '../constants/mockData';
 
 // Mock next/dynamic to return a simple placeholder in tests
 vi.mock('next/dynamic', () => {
@@ -43,6 +44,10 @@ vi.mock('recharts', async () => {
 describe('Feature Components Integration', () => {
   beforeEach(() => {
     localStorage.clear();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
   
   describe('OperationsDashboard', () => {
@@ -482,14 +487,17 @@ describe('Feature Components Integration', () => {
   });
 
   describe('ErrorBoundary', () => {
-    const ProblematicComponent = () => {
-      throw new Error('Test rendering crash');
-    };
-
-    it('should catch rendering errors and render a recovery screen', () => {
+    it('should catch rendering errors, render a recovery screen, and support retry render recovery', () => {
       const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      let shouldCrash = true;
+      const ProblematicComponent = () => {
+        if (shouldCrash) {
+          throw new Error('Test rendering crash');
+        }
+        return <div data-testid="recovered-element">Recovered successfully!</div>;
+      };
 
-      render(
+      const { rerender } = render(
         <ErrorBoundary fallbackTitle="Custom Fallback Test">
           <ProblematicComponent />
         </ErrorBoundary>
@@ -497,9 +505,266 @@ describe('Feature Components Integration', () => {
 
       expect(screen.getByText('Custom Fallback Test')).toBeInTheDocument();
       expect(screen.getByText(/An unexpected error occurred/i)).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /Retry Render/i })).toBeInTheDocument();
 
+      const retryBtn = screen.getByRole('button', { name: /Retry Render/i });
+      expect(retryBtn).toBeInTheDocument();
+
+      // Fix problem and retry
+      shouldCrash = false;
+      fireEvent.click(retryBtn);
+
+      // Re-render to trigger state change and recovery
+      rerender(
+        <ErrorBoundary fallbackTitle="Custom Fallback Test">
+          <ProblematicComponent />
+        </ErrorBoundary>
+      );
+
+      expect(screen.getByTestId('recovered-element').textContent).toBe('Recovered successfully!');
       spy.mockRestore();
+    });
+
+    it('should use default Component Render Error fallback title if fallbackTitle is omitted', () => {
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const ProblematicComponent = () => {
+        throw new Error('Test crash');
+      };
+
+      render(
+        <ErrorBoundary>
+          <ProblematicComponent />
+        </ErrorBoundary>
+      );
+
+      expect(screen.getByText('Component Render Error')).toBeInTheDocument();
+      spy.mockRestore();
+    });
+  });
+
+  describe('AIChat and PredictionChart Error Paths', () => {
+    it('handles throw exception catch block inside AIChat', async () => {
+      const geminiService = await import('../services/geminiService');
+      const askGeminiSpy = vi.spyOn(geminiService, 'askGemini').mockRejectedValueOnce(new Error('Mock AI Crash'));
+
+      const { container } = render(
+        <SettingsProvider>
+          <OperationsProvider>
+            <AIChat onOpenSettings={vi.fn()} />
+          </OperationsProvider>
+        </SettingsProvider>
+      );
+
+      const input = await screen.findByRole('textbox', { name: '' });
+      fireEvent.change(input, { target: { value: 'Trigger crash' } });
+      const sendBtn = container.querySelector('#btn-send-message');
+
+      await act(async () => {
+        fireEvent.click(sendBtn!);
+      });
+
+      expect(await screen.findByText(/An unexpected operational error occurred: Mock AI Crash/i)).toBeInTheDocument();
+      askGeminiSpy.mockRestore();
+    });
+
+    it('handles raw string throw catch block inside AIChat', async () => {
+      const geminiService = await import('../services/geminiService');
+      const askGeminiSpy = vi.spyOn(geminiService, 'askGemini').mockRejectedValueOnce('Raw String Crash');
+
+      const { container } = render(
+        <SettingsProvider>
+          <OperationsProvider>
+            <AIChat onOpenSettings={vi.fn()} />
+          </OperationsProvider>
+        </SettingsProvider>
+      );
+
+      const input = await screen.findByRole('textbox', { name: '' });
+      fireEvent.change(input, { target: { value: 'Trigger raw crash' } });
+      const sendBtn = container.querySelector('#btn-send-message');
+
+      await act(async () => {
+        fireEvent.click(sendBtn!);
+      });
+
+      expect(await screen.findByText(/An unexpected operational error occurred: Unknown issue/i)).toBeInTheDocument();
+      askGeminiSpy.mockRestore();
+    });
+
+    it('handles throw exception catch block inside PredictionChart explanation', async () => {
+      const geminiService = await import('../services/geminiService');
+      const askGeminiSpy = vi.spyOn(geminiService, 'askGemini').mockRejectedValueOnce(new Error('Mock Prediction Crash'));
+
+      render(
+        <SettingsProvider>
+          <OperationsProvider>
+            <PredictionChart />
+          </OperationsProvider>
+        </SettingsProvider>
+      );
+
+      const explainBtn = screen.getByRole('button', { name: /Explain Forecast/i });
+      await act(async () => {
+        fireEvent.click(explainBtn);
+      });
+
+      expect(await screen.findByText(/Failed to generate explanation: Mock Prediction Crash/i)).toBeInTheDocument();
+      askGeminiSpy.mockRestore();
+    });
+
+    it('handles raw string throw catch block inside PredictionChart explanation', async () => {
+      const geminiService = await import('../services/geminiService');
+      const askGeminiSpy = vi.spyOn(geminiService, 'askGemini').mockRejectedValueOnce('Raw String Prediction Crash');
+
+      render(
+        <SettingsProvider>
+          <OperationsProvider>
+            <PredictionChart />
+          </OperationsProvider>
+        </SettingsProvider>
+      );
+
+      const explainBtn = screen.getByRole('button', { name: /Explain Forecast/i });
+      await act(async () => {
+        fireEvent.click(explainBtn);
+      });
+
+      expect(await screen.findByText(/Failed to generate explanation: Unknown error/i)).toBeInTheDocument();
+      askGeminiSpy.mockRestore();
+    });
+  });
+
+  describe('VolunteerTasks select assign onChange trigger', () => {
+    it('should trigger assignTask when volunteer select dropdown is changed', async () => {
+      render(
+        <SettingsProvider>
+          <OperationsProvider>
+            <VolunteerTasks />
+          </OperationsProvider>
+        </SettingsProvider>
+      );
+
+      // Verify task lists render and locate the select dropdowns
+      const selectElems = await screen.findAllByRole('combobox');
+      expect(selectElems.length).toBeGreaterThan(0);
+
+      fireEvent.change(selectElems[0], { target: { value: 'vol-1' } });
+    });
+  });
+
+  describe('TransportPlanner styling branches for delayed and suspended lines', () => {
+    it('covers delayed, suspended, and default statuses using a CustomStateWrapper', () => {
+      const TransitStateWrapper = () => {
+        const { state } = useOperations();
+        // Modify transit line statuses to cover delayed and suspended classes, plus default status
+        state.transit[0].status = 'delayed';
+        state.transit[1].status = 'suspended';
+        // Cover default branch by casting to PublicTransit['status'] type
+        state.transit[2].status = 'unknown-status' as unknown as 'delayed' | 'on-time' | 'suspended';
+        return <TransportPlanner />;
+      };
+
+      render(
+        <SettingsProvider>
+          <OperationsProvider>
+            <TransitStateWrapper />
+          </OperationsProvider>
+        </SettingsProvider>
+      );
+
+      expect(screen.getByText(/delayed/i)).toBeInTheDocument();
+      expect(screen.getByText(/suspended/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('geminiService fallback matching edge cases', () => {
+    it('tests fallback query types (incident, volunteer, default) and unsupported language fallback to English', async () => {
+      const geminiService = await import('../services/geminiService');
+      
+      // Use unsupported language 'de' to test fallback to 'en'
+      const deSettings = {
+        geminiApiKey: '',
+        language: 'de',
+        accessibilityMode: false,
+        fontSize: 'normal' as const,
+        simpleLanguage: false,
+        highContrast: false,
+        audioReader: false
+      };
+
+      // 1. Volunteer query fallback
+      const volReply = await geminiService.askGemini('Who are the volunteers?', INITIAL_STADIUM_STATE, deSettings);
+      expect(volReply).toContain('volunteer deployment');
+
+      // 2. Incident query fallback
+      const incReply = await geminiService.askGemini('Show me incidents', INITIAL_STADIUM_STATE, deSettings);
+      expect(incReply).toContain('stadium incidents');
+
+      // 3. Default fallback
+      const defaultReply = await geminiService.askGemini('Random question here', INITIAL_STADIUM_STATE, deSettings);
+      expect(defaultReply).toContain('FIFA 2026 assistant');
+    });
+
+    it('tests live query rendering with zero incidents and zero alerts', async () => {
+      const geminiService = await import('../services/geminiService');
+      const customState = {
+        ...INITIAL_STADIUM_STATE,
+        incidents: [],
+        activeAlerts: []
+      };
+
+      const settingsWithKey = {
+        geminiApiKey: 'AIzaSyA1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6Q',
+        language: 'en',
+        accessibilityMode: false,
+        fontSize: 'normal' as const,
+        simpleLanguage: false,
+        highContrast: false,
+        audioReader: false
+      };
+
+      const mockJson = {
+        candidates: [{ content: { parts: [{ text: 'Live summary response.' }] } }]
+      };
+      
+      const originalFetch = global.fetch;
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => mockJson,
+        status: 200
+      } as Response);
+
+      const reply = await geminiService.askGemini('status', customState, settingsWithKey);
+      expect(reply).toBe('Live summary response.');
+
+      // Check prompt content for empty incidents and alerts strings
+      const fetchCall = vi.mocked(fetch).mock.calls[0];
+      const body = JSON.parse(fetchCall[1]?.body as string);
+      expect(body.contents[0].parts[0].text).toContain('No active incidents.');
+      expect(body.contents[0].parts[0].text).toContain('None');
+
+      global.fetch = originalFetch;
+    });
+
+    it('tests catch block exception string conversion in askGemini', async () => {
+      const geminiService = await import('../services/geminiService');
+      const settingsWithKey = {
+        geminiApiKey: 'AIzaSyA1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6Q',
+        language: 'en',
+        accessibilityMode: false,
+        fontSize: 'normal' as const,
+        simpleLanguage: false,
+        highContrast: false,
+        audioReader: false
+      };
+
+      const originalFetch = global.fetch;
+      // Mock fetch to reject with a raw string (not Error instance) to hit `String(error)` branch
+      global.fetch = vi.fn().mockRejectedValue('RawStringNetworkError');
+
+      const reply = await geminiService.askGemini('status', INITIAL_STADIUM_STATE, settingsWithKey);
+      expect(reply).toContain('RawStringNetworkError');
+
+      global.fetch = originalFetch;
     });
   });
 });

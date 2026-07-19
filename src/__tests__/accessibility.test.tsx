@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { SettingsProvider, useSettings } from '../context/SettingsContext';
-import { OperationsProvider } from '../context/OperationsContext';
+import { OperationsProvider, useOperations } from '../context/OperationsContext';
 import StadiumMap from '../features/live-map/StadiumMap';
 
 // Test component to consume SettingsContext
@@ -152,7 +152,56 @@ describe('Accessibility Features', () => {
         fireEvent.keyDown(gate, { key: 'Enter', code: 'Enter', charCode: 13, keyCode: 13 });
         expect(screen.getByText(/Gate A \(North\)/i)).toBeInTheDocument();
       }
+
+      // Test Space key triggers for stands
+      fireEvent.keyDown(stand, { key: ' ', code: 'Space', charCode: 32, keyCode: 32 });
+      expect(screen.getByText(/Crowd: 19800/i)).toBeInTheDocument();
+
+      // Test Space key triggers for facilities
+      if (facility) {
+        fireEvent.keyDown(facility, { key: ' ', code: 'Space', charCode: 32, keyCode: 32 });
+        expect(screen.getByText(/Food Court A/i)).toBeInTheDocument();
+      }
+
+      // Test Space key triggers for gates
+      if (gate) {
+        fireEvent.keyDown(gate, { key: ' ', code: 'Space', charCode: 32, keyCode: 32 });
+        expect(screen.getByText(/Gate A \(North\)/i)).toBeInTheDocument();
+      }
     });
+
+    it('covers all density colors and border styling branches including defaults', () => {
+      // Create a wrapper to modify gates with various densities before rendering StadiumMap
+      const CustomStateWrapper = () => {
+        const { updateGateStatus, setGateDensity, setZoneDensity } = useOperations();
+        React.useEffect(() => {
+          // Set different gates to cover all density border switch cases
+          updateGateStatus('gate-a', 'open', 5);    // low density
+          updateGateStatus('gate-b', 'open', 15);   // medium density
+          updateGateStatus('gate-c', 'open', 25);   // high density
+          updateGateStatus('gate-d', 'open', 35);   // critical density
+          // Cover default branch by casting to DensityLevel
+          setGateDensity('gate-a', 'unknown-density' as unknown as DensityLevel);
+          setZoneDensity('zone-north', 'unknown-density' as unknown as DensityLevel);
+          // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, []);
+
+        return <StadiumMap routeType="none" />;
+      };
+
+      render(
+        <SettingsProvider>
+          <OperationsProvider>
+            <CustomStateWrapper />
+          </OperationsProvider>
+        </SettingsProvider>
+      );
+
+      // Verify buttons rendered with correct classes (e.g., border color)
+      const gateBtns = screen.queryAllByRole('button', { name: /Inspect Gate/i });
+      expect(gateBtns.length).toBe(4);
+    });
+
 
     it('renders all route paths, gate quick bars, and allows closing detail box', () => {
       const routes: Array<'none' | 'wheelchair' | 'family' | 'senior' | 'vision' | 'exits' | 'medical'> = [

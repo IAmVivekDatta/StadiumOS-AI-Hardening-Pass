@@ -59,3 +59,32 @@ Object.defineProperty(window, 'ResizeObserver', {
   value: ResizeObserverMock,
   writable: true,
 });
+
+// Suppress known/expected warning and error logs during tests to keep stdout/stderr clean
+const originalConsoleError = console.error;
+console.error = (...args: unknown[]) => {
+  const msg = args[0]?.toString() || '';
+  if (
+    msg.includes('is unrecognized in this browser') ||
+    msg.includes('is using incorrect casing') ||
+    msg.includes('Gemini API Error') ||
+    msg.includes('Failed to parse settings from local storage') ||
+    msg.includes('Uncaught error inside ErrorBoundary') ||
+    msg.includes('The above error occurred in the')
+  ) {
+    return;
+  }
+  originalConsoleError(...args);
+};
+
+const originalConsoleWarn = console.warn;
+console.warn = (...args: unknown[]) => {
+  const msg = args[0]?.toString() || '';
+  if (
+    msg.includes('is unrecognized in this browser') ||
+    msg.includes('is using incorrect casing')
+  ) {
+    return;
+  }
+  originalConsoleWarn(...args);
+};

@@ -14,6 +14,10 @@ interface OperationsContextProps {
   updateTaskStatus: (taskId: string, status: VolunteerTask['status']) => void;
   updateVolunteerStatus: (volunteerId: string, status: VolunteerStatus) => void;
   updateGateStatus: (gateId: string, status: GateStatus, waitTime?: number) => void;
+  // Test utilities for direct state manipulation in tests
+  setGateDensity: (gateId: string, density: DensityLevel) => void;
+  setTransitStatus: (transitId: string, status: 'on-time' | 'delayed' | 'suspended') => void;
+  setZoneDensity: (zoneId: string, density: DensityLevel) => void;
   triggerEmergencyAlert: (message: string) => void;
   clearAlerts: () => void;
   simulateStateTick: () => void;
@@ -62,6 +66,27 @@ export function OperationsProvider({ children }: { children: React.ReactNode }) 
         wasteLevel: newWaste
       };
     });
+  };
+  // Test utility functions
+  const setGateDensity = (gateId: string, density: DensityLevel) => {
+    setState((prev) => ({
+      ...prev,
+      gates: prev.gates.map((g) => (g.id === gateId ? { ...g, density } : g)),
+    }));
+  };
+
+  const setTransitStatus = (transitId: string, status: 'on-time' | 'delayed' | 'suspended') => {
+    setState((prev) => ({
+      ...prev,
+      transit: prev.transit.map((t) => (t.id === transitId ? { ...t, status } : t)),
+    }));
+  };
+
+  const setZoneDensity = (zoneId: string, density: DensityLevel) => {
+    setState((prev) => ({
+      ...prev,
+      zones: prev.zones.map((z) => (z.id === zoneId ? { ...z, density } : z)),
+    }));
   };
 
   // Periodic simulation tick to make the command center feel alive
@@ -232,7 +257,10 @@ export function OperationsProvider({ children }: { children: React.ReactNode }) 
         updateGateStatus,
         triggerEmergencyAlert,
         clearAlerts,
-        simulateStateTick
+        simulateStateTick,
+        setGateDensity,
+        setTransitStatus,
+        setZoneDensity
       }}
     >
       {children}

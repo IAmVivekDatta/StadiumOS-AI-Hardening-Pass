@@ -66,4 +66,23 @@ describe('Settings State Management', () => {
     expect(screen.getByTestId('language').textContent).toBe('es');
     expect(screen.getByTestId('high-contrast').textContent).toBe('Active');
   });
+
+  it('gracefully handles malformed JSON in localStorage and defaults settings', () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.stubGlobal('localStorage', {
+      getItem: vi.fn(() => '{invalid_json'),
+      setItem: vi.fn(),
+    });
+
+    render(
+      <SettingsProvider>
+        <TestSettingsComponent />
+      </SettingsProvider>
+    );
+
+    expect(screen.getByTestId('api-key').textContent).toBe('None');
+    expect(screen.getByTestId('language').textContent).toBe('en');
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
+  });
 });
