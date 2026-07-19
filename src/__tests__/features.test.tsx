@@ -14,16 +14,23 @@ import Home from '../app/page';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { INITIAL_STADIUM_STATE } from '../constants/mockData';
 
-// Mock next/dynamic to return a simple placeholder in tests
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// Mock next/dynamic to resolve real components dynamically via lazy & suspense in tests
 vi.mock('next/dynamic', () => {
   return {
-    default: () => {
-      const MockChart = () => <div data-testid="prediction-chart-placeholder">Prediction Chart Placeholder</div>;
-      MockChart.displayName = 'MockChart';
-      return MockChart;
+    default: (loader: () => Promise<{ default: React.ComponentType<any> }>) => {
+      const LazyComponent = React.lazy(loader);
+      const DynamicComponent = (props: any) => (
+        <React.Suspense fallback={<div data-testid="dynamic-loading">Loading...</div>}>
+          <LazyComponent {...props} />
+        </React.Suspense>
+      );
+      DynamicComponent.displayName = 'DynamicComponent';
+      return DynamicComponent;
     }
   };
 });
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 // Mock Recharts since it doesn't render SVG correctly in JSDOM and can throw layout warnings
 vi.mock('recharts', async () => {
@@ -405,6 +412,9 @@ describe('Feature Components Integration', () => {
 
       // Verify dashboard header is present (using findAllByText to handle header title and chat welcome instances)
       expect((await screen.findAllByText(/StadiumOS AI/i)).length).toBeGreaterThan(0);
+
+      // Wait for dynamically loaded widgets to resolve and render
+      await screen.findByText(/Volunteer Dispatch Board/i);
 
       // Click "Simulate Telemetry Tick"
       const tickBtn = screen.getByRole('button', { name: /Simulate Telemetry Tick/i });
