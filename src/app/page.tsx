@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { useSettings } from '../context/SettingsContext';
 import { useOperations } from '../context/OperationsContext';
@@ -29,16 +29,16 @@ export default function Home() {
   const [tempApiKey, setTempApiKey] = useState(settings.geminiApiKey);
   const [mapRoute, setMapRoute] = useState<'none' | 'wheelchair' | 'family' | 'senior' | 'vision'>('none');
 
-  const handleSaveSettings = (e: React.FormEvent) => {
+  const handleSaveSettings = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     setGeminiApiKey(tempApiKey);
     setShowSettings(false);
-  };
+  }, [tempApiKey, setGeminiApiKey]);
 
-  const handleClearKey = () => {
+  const handleClearKey = useCallback(() => {
     setTempApiKey('');
     setGeminiApiKey('');
-  };
+  }, [setGeminiApiKey]);
 
   // Determine global wrapper classes based on accessibility configuration
   const wrapperClass = `min-h-screen text-white font-sans transition-colors duration-300 ${

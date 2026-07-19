@@ -16,6 +16,15 @@ import {
   AlertOctagon
 } from 'lucide-react';
 
+const getSeverityBadge = (sev: IncidentSeverity) => {
+  switch (sev) {
+    case 'low': return 'bg-neutral-800 text-neutral-400 border-neutral-750';
+    case 'medium': return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+    case 'high': return 'bg-orange-500/10 text-orange-400 border-orange-500/20';
+    case 'critical': return 'bg-red-500/15 text-red-400 border-red-500/30 animate-pulse';
+  }
+};
+
 export default function OperationsDashboard() {
   const { state, updateIncidentStatus, resolveIncident, triggerEmergencyAlert, clearAlerts } = useOperations();
   const [broadcastText, setBroadcastText] = useState('');
@@ -27,15 +36,6 @@ export default function OperationsDashboard() {
     const pct = cap > 0 ? Math.round((crowd / cap) * 100) : 0;
     return { totalCapacity: cap, totalCrowd: crowd, crowdPercentage: pct };
   }, [state.zones]);
-
-  const getSeverityBadge = (sev: IncidentSeverity) => {
-    switch (sev) {
-      case 'low': return 'bg-neutral-800 text-neutral-400 border-neutral-750';
-      case 'medium': return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
-      case 'high': return 'bg-orange-500/10 text-orange-400 border-orange-500/20';
-      case 'critical': return 'bg-red-500/15 text-red-400 border-red-500/30 animate-pulse';
-    }
-  };
 
   const handleBroadcast = (e: React.FormEvent) => {
     e.preventDefault();

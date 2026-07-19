@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { UserSettings } from '../types';
 
 interface SettingsContextProps {
@@ -48,68 +48,68 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     setMounted(true);
   }, []);
 
-  const setGeminiApiKey = (key: string) => {
+  const setGeminiApiKey = useCallback((key: string) => {
     setSettings((prev) => {
       const next = { ...prev, geminiApiKey: key };
       localStorage.setItem('stadium_os_settings', JSON.stringify(next));
       return next;
     });
-  };
+  }, []);
 
-  const setLanguage = (lang: string) => {
+  const setLanguage = useCallback((lang: string) => {
     setSettings((prev) => {
       const next = { ...prev, language: lang };
       localStorage.setItem('stadium_os_settings', JSON.stringify(next));
       return next;
     });
-  };
+  }, []);
 
-  const setAccessibilityMode = (enabled: boolean) => {
+  const setAccessibilityMode = useCallback((enabled: boolean) => {
     setSettings((prev) => {
       const next = { ...prev, accessibilityMode: enabled };
       localStorage.setItem('stadium_os_settings', JSON.stringify(next));
       return next;
     });
-  };
+  }, []);
 
-  const setFontSize = (size: 'normal' | 'large' | 'extra-large') => {
+  const setFontSize = useCallback((size: 'normal' | 'large' | 'extra-large') => {
     setSettings((prev) => {
       const next = { ...prev, fontSize: size };
       localStorage.setItem('stadium_os_settings', JSON.stringify(next));
       return next;
     });
-  };
+  }, []);
 
-  const setSimpleLanguage = (enabled: boolean) => {
+  const setSimpleLanguage = useCallback((enabled: boolean) => {
     setSettings((prev) => {
       const next = { ...prev, simpleLanguage: enabled };
       localStorage.setItem('stadium_os_settings', JSON.stringify(next));
       return next;
     });
-  };
+  }, []);
 
-  const setHighContrast = (enabled: boolean) => {
+  const setHighContrast = useCallback((enabled: boolean) => {
     setSettings((prev) => {
       const next = { ...prev, highContrast: enabled };
       localStorage.setItem('stadium_os_settings', JSON.stringify(next));
       return next;
     });
-  };
+  }, []);
 
-  const setAudioReader = (enabled: boolean) => {
+  const setAudioReader = useCallback((enabled: boolean) => {
     setSettings((prev) => {
       const next = { ...prev, audioReader: enabled };
       localStorage.setItem('stadium_os_settings', JSON.stringify(next));
       return next;
     });
-  };
+  }, []);
 
-  const resetSettings = () => {
+  const resetSettings = useCallback(() => {
     setSettings(() => {
       localStorage.setItem('stadium_os_settings', JSON.stringify(DEFAULT_SETTINGS));
       return DEFAULT_SETTINGS;
     });
-  };
+  }, []);
 
   // Prevent hydration flash by rendering children only after mounting on the client
   return (

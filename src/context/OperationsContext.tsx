@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { StadiumState, Incident, VolunteerTask, VolunteerStatus, GateStatus, IncidentStatus, DensityLevel } from '../types';
 import { INITIAL_STADIUM_STATE } from '../constants/mockData';
 
@@ -28,7 +28,7 @@ const OperationsContext = createContext<OperationsContextProps | undefined>(unde
 export function OperationsProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<StadiumState>(INITIAL_STADIUM_STATE);
 
-  const simulateStateTick = () => {
+  const simulateStateTick = useCallback(() => {
     setState((prev) => {
       // 1. Slightly fluctuate gate wait times
       const updatedGates = prev.gates.map((g) => {
@@ -66,28 +66,29 @@ export function OperationsProvider({ children }: { children: React.ReactNode }) 
         wasteLevel: newWaste
       };
     });
-  };
+  }, []);
+
   // Test utility functions
-  const setGateDensity = (gateId: string, density: DensityLevel) => {
+  const setGateDensity = useCallback((gateId: string, density: DensityLevel) => {
     setState((prev) => ({
       ...prev,
       gates: prev.gates.map((g) => (g.id === gateId ? { ...g, density } : g)),
     }));
-  };
+  }, []);
 
-  const setTransitStatus = (transitId: string, status: 'on-time' | 'delayed' | 'suspended') => {
+  const setTransitStatus = useCallback((transitId: string, status: 'on-time' | 'delayed' | 'suspended') => {
     setState((prev) => ({
       ...prev,
       transit: prev.transit.map((t) => (t.id === transitId ? { ...t, status } : t)),
     }));
-  };
+  }, []);
 
-  const setZoneDensity = (zoneId: string, density: DensityLevel) => {
+  const setZoneDensity = useCallback((zoneId: string, density: DensityLevel) => {
     setState((prev) => ({
       ...prev,
       zones: prev.zones.map((z) => (z.id === zoneId ? { ...z, density } : z)),
     }));
-  };
+  }, []);
 
   // Periodic simulation tick to make the command center feel alive
   useEffect(() => {
@@ -96,9 +97,9 @@ export function OperationsProvider({ children }: { children: React.ReactNode }) 
     }, 15000); // Update every 15 seconds
 
     return () => clearInterval(interval);
-  }, []);
+  }, [simulateStateTick]);
 
-  const addIncident = (incidentData: Omit<Incident, 'id' | 'reportedAt'>) => {
+  const addIncident = useCallback((incidentData: Omit<Incident, 'id' | 'reportedAt'>) => {
     const newIncident: Incident = {
       ...incidentData,
       id: `inc-${Date.now()}`,
@@ -120,16 +121,16 @@ export function OperationsProvider({ children }: { children: React.ReactNode }) 
         zones: updatedZones
       };
     });
-  };
+  }, []);
 
-  const updateIncidentStatus = (id: string, status: IncidentStatus) => {
+  const updateIncidentStatus = useCallback((id: string, status: IncidentStatus) => {
     setState((prev) => ({
       ...prev,
       incidents: prev.incidents.map((inc) => (inc.id === id ? { ...inc, status } : inc))
     }));
-  };
+  }, []);
 
-  const resolveIncident = (id: string) => {
+  const resolveIncident = useCallback((id: string) => {
     setState((prev) => {
       const target = prev.incidents.find((inc) => inc.id === id);
       if (!target) return prev;
@@ -148,9 +149,9 @@ export function OperationsProvider({ children }: { children: React.ReactNode }) 
         zones: updatedZones
       };
     });
-  };
+  }, []);
 
-  const addTask = (taskData: Omit<VolunteerTask, 'id' | 'assignedToVolunteerId' | 'assignedToVolunteerName'>) => {
+  const addTask = useCallback((taskData: Omit<VolunteerTask, 'id' | 'assignedToVolunteerId' | 'assignedToVolunteerName'>) => {
     const newTask: VolunteerTask = {
       ...taskData,
       id: `task-${Date.now()}`,
@@ -162,9 +163,9 @@ export function OperationsProvider({ children }: { children: React.ReactNode }) 
       ...prev,
       tasks: [newTask, ...prev.tasks]
     }));
-  };
+  }, []);
 
-  const assignTask = (taskId: string, volunteerId: string | null) => {
+  const assignTask = useCallback((taskId: string, volunteerId: string | null) => {
     setState((prev) => {
       const volunteer = volunteerId ? prev.volunteers.find((v) => v.id === volunteerId) : null;
       
@@ -185,9 +186,9 @@ export function OperationsProvider({ children }: { children: React.ReactNode }) 
         tasks: updatedTasks
       };
     });
-  };
+  }, []);
 
-  const updateTaskStatus = (taskId: string, status: VolunteerTask['status']) => {
+  const updateTaskStatus = useCallback((taskId: string, status: VolunteerTask['status']) => {
     setState((prev) => ({
       ...prev,
       tasks: prev.tasks.map((t) => {
@@ -201,16 +202,16 @@ export function OperationsProvider({ children }: { children: React.ReactNode }) 
         return t;
       }).filter((t) => t.status !== 'completed') // remove completed tasks from active dashboard list
     }));
-  };
+  }, []);
 
-  const updateVolunteerStatus = (volunteerId: string, status: VolunteerStatus) => {
+  const updateVolunteerStatus = useCallback((volunteerId: string, status: VolunteerStatus) => {
     setState((prev) => ({
       ...prev,
       volunteers: prev.volunteers.map((v) => (v.id === volunteerId ? { ...v, status } : v))
     }));
-  };
+  }, []);
 
-  const updateGateStatus = (gateId: string, status: GateStatus, waitTime?: number) => {
+  const updateGateStatus = useCallback((gateId: string, status: GateStatus, waitTime?: number) => {
     setState((prev) => ({
       ...prev,
       gates: prev.gates.map((g) => {
@@ -227,21 +228,21 @@ export function OperationsProvider({ children }: { children: React.ReactNode }) 
         return g;
       })
     }));
-  };
+  }, []);
 
-  const triggerEmergencyAlert = (message: string) => {
+  const triggerEmergencyAlert = useCallback((message: string) => {
     setState((prev) => ({
       ...prev,
       activeAlerts: [message, ...prev.activeAlerts]
     }));
-  };
+  }, []);
 
-  const clearAlerts = () => {
+  const clearAlerts = useCallback(() => {
     setState((prev) => ({
       ...prev,
       activeAlerts: []
     }));
-  };
+  }, []);
 
   return (
     <OperationsContext.Provider

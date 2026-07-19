@@ -8,6 +8,15 @@ import {
   Navigation
 } from 'lucide-react';
 
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'on-time': return 'text-emerald-400 bg-emerald-950/20 border-emerald-900/30';
+    case 'delayed': return 'text-amber-400 bg-amber-950/20 border-amber-900/30';
+    case 'suspended': return 'text-red-400 bg-red-950/20 border-red-900/30 animate-pulse';
+    default: return 'text-neutral-400 bg-neutral-900 border-neutral-800';
+  }
+};
+
 export default function TransportPlanner() {
   const { state } = useOperations();
 
@@ -17,15 +26,6 @@ export default function TransportPlanner() {
     const slow = state.transit.find(t => t.waitTime > 25);
     return { recommendedTransit: recommended, slowTransit: slow };
   }, [state.transit]);
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'on-time': return 'text-emerald-400 bg-emerald-950/20 border-emerald-900/30';
-      case 'delayed': return 'text-amber-400 bg-amber-950/20 border-amber-900/30';
-      case 'suspended': return 'text-red-400 bg-red-950/20 border-red-900/30 animate-pulse';
-      default: return 'text-neutral-400 bg-neutral-900 border-neutral-800';
-    }
-  };
 
   return (
     <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5 shadow-lg space-y-5">

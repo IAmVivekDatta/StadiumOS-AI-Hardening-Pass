@@ -16,38 +16,38 @@ interface StadiumMapProps {
   routeType: 'none' | 'wheelchair' | 'family' | 'senior' | 'vision';
 }
 
+// Map density to colors
+const getDensityColor = (density: string) => {
+  switch (density) {
+    case 'low': return 'fill-emerald-500/10 stroke-emerald-500/40';
+    case 'medium': return 'fill-amber-500/10 stroke-amber-500/40';
+    case 'high': return 'fill-orange-500/15 stroke-orange-500/60';
+    case 'critical': return 'fill-red-500/25 stroke-red-500/80 animate-pulse';
+    default: return 'fill-neutral-800 stroke-neutral-700';
+  }
+};
+
+const getGateBorderColor = (density: string) => {
+  switch (density) {
+    case 'low': return 'border-emerald-500/40 text-emerald-400 bg-emerald-950/20';
+    case 'medium': return 'border-amber-500/40 text-amber-400 bg-amber-950/20';
+    case 'high': return 'border-orange-500/40 text-orange-400 bg-orange-950/20';
+    case 'critical': return 'border-red-500/60 text-red-400 bg-red-950/30 animate-pulse';
+    default: return 'border-neutral-700 text-neutral-400';
+  }
+};
+
+const zonesMap: Record<string, { label: string; coords: string; textCoords: [number, number] }> = {
+  'zone-north': { label: 'North Stand', coords: 'M 150 120 A 130 130 0 0 1 350 120 L 330 150 A 100 100 0 0 0 170 150 Z', textCoords: [250, 105] },
+  'zone-east': { label: 'East Stand', coords: 'M 350 120 A 130 130 0 0 1 350 280 L 330 250 A 100 100 0 0 0 330 150 Z', textCoords: [375, 200] },
+  'zone-south': { label: 'South Stand', coords: 'M 350 280 A 130 130 0 0 1 150 280 L 170 250 A 100 100 0 0 0 330 250 Z', textCoords: [250, 310] },
+  'zone-west': { label: 'West Stand', coords: 'M 150 280 A 130 130 0 0 1 150 120 L 170 150 A 100 100 0 0 0 170 250 Z', textCoords: [120, 200] },
+  'zone-concourse': { label: 'Concourse Ring', coords: 'M 90 200 A 160 160 0 1 1 410 200 A 160 160 0 1 1 90 200 M 105 200 A 145 145 0 1 0 395 200 A 145 145 0 1 0 105 200 Z', textCoords: [250, 75] }
+};
+
 export default function StadiumMap({ routeType }: StadiumMapProps) {
   const { state } = useOperations();
   const [selectedElement, setSelectedElement] = useState<{ type: 'zone' | 'gate' | 'facility'; name: string; details: string } | null>(null);
-
-  // Map density to colors
-  const getDensityColor = (density: string) => {
-    switch (density) {
-      case 'low': return 'fill-emerald-500/10 stroke-emerald-500/40';
-      case 'medium': return 'fill-amber-500/10 stroke-amber-500/40';
-      case 'high': return 'fill-orange-500/15 stroke-orange-500/60';
-      case 'critical': return 'fill-red-500/25 stroke-red-500/80 animate-pulse';
-      default: return 'fill-neutral-800 stroke-neutral-700';
-    }
-  };
-
-  const getGateBorderColor = (density: string) => {
-    switch (density) {
-      case 'low': return 'border-emerald-500/40 text-emerald-400 bg-emerald-950/20';
-      case 'medium': return 'border-amber-500/40 text-amber-400 bg-amber-950/20';
-      case 'high': return 'border-orange-500/40 text-orange-400 bg-orange-950/20';
-      case 'critical': return 'border-red-500/60 text-red-400 bg-red-950/30 animate-pulse';
-      default: return 'border-neutral-700 text-neutral-400';
-    }
-  };
-
-  const zonesMap: Record<string, { label: string; coords: string; textCoords: [number, number] }> = {
-    'zone-north': { label: 'North Stand', coords: 'M 150 120 A 130 130 0 0 1 350 120 L 330 150 A 100 100 0 0 0 170 150 Z', textCoords: [250, 105] },
-    'zone-east': { label: 'East Stand', coords: 'M 350 120 A 130 130 0 0 1 350 280 L 330 250 A 100 100 0 0 0 330 150 Z', textCoords: [375, 200] },
-    'zone-south': { label: 'South Stand', coords: 'M 350 280 A 130 130 0 0 1 150 280 L 170 250 A 100 100 0 0 0 330 250 Z', textCoords: [250, 310] },
-    'zone-west': { label: 'West Stand', coords: 'M 150 280 A 130 130 0 0 1 150 120 L 170 150 A 100 100 0 0 0 170 250 Z', textCoords: [120, 200] },
-    'zone-concourse': { label: 'Concourse Ring', coords: 'M 90 200 A 160 160 0 1 1 410 200 A 160 160 0 1 1 90 200 M 105 200 A 145 145 0 1 0 395 200 A 145 145 0 1 0 105 200 Z', textCoords: [250, 75] }
-  };
 
   const facilities = useMemo(() => [
     { name: 'Food Court A', x: 250, y: 155, type: 'food', icon: Coffee, details: 'Wheelchair-friendly ramp. Low crowds.' },

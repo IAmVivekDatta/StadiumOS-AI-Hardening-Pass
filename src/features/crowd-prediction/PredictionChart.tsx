@@ -22,6 +22,24 @@ import {
   RefreshCw
 } from 'lucide-react';
 
+const getPeakWaitTime = () => {
+  let peak = 0;
+  let gate = '';
+  let time = '';
+  CROWD_PREDICTION_DATA.forEach((row) => {
+    (['Gate A', 'Gate B', 'Gate C', 'Gate D'] as const).forEach((g) => {
+      if (row[g] > peak) {
+        peak = row[g];
+        gate = g;
+        time = row.time;
+      }
+    });
+  });
+  return { peak, gate, time };
+};
+
+const peakInfo = getPeakWaitTime();
+
 export default function PredictionChart() {
   const { state } = useOperations();
   const { settings } = useSettings();
@@ -56,24 +74,6 @@ Be concise and write in a professional operations commander style.`;
       setLoading(false);
     }
   };
-
-  const getPeakWaitTime = () => {
-    let peak = 0;
-    let gate = '';
-    let time = '';
-    CROWD_PREDICTION_DATA.forEach((row) => {
-      (['Gate A', 'Gate B', 'Gate C', 'Gate D'] as const).forEach((g) => {
-        if (row[g] > peak) {
-          peak = row[g];
-          gate = g;
-          time = row.time;
-        }
-      });
-    });
-    return { peak, gate, time };
-  };
-
-  const peakInfo = getPeakWaitTime();
 
   return (
     <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5 shadow-lg space-y-4">

@@ -17,6 +17,25 @@ import {
   Info
 } from 'lucide-react';
 
+const getPriorityColor = (prio: TaskPriority) => {
+  switch (prio) {
+    case 'low': return 'bg-neutral-800 text-neutral-400 border-neutral-750';
+    case 'medium': return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+    case 'high': return 'bg-orange-500/10 text-orange-400 border-orange-500/20';
+    case 'critical': return 'bg-red-500/15 text-red-400 border-red-500/30 animate-pulse';
+  }
+};
+
+const getCategoryIcon = (cat: VolunteerTask['category']) => {
+  switch (cat) {
+    case 'accessibility': return <Accessibility className="w-3.5 h-3.5 text-blue-400" />;
+    case 'crowd': return <Flame className="w-3.5 h-3.5 text-orange-400" />;
+    case 'medical': return <AlertCircle className="w-3.5 h-3.5 text-red-400" />;
+    case 'info': return <Info className="w-3.5 h-3.5 text-indigo-400" />;
+    case 'facility': return <Wrench className="w-3.5 h-3.5 text-emerald-400" />;
+  }
+};
+
 export default function VolunteerTasks() {
   const { state, addTask, assignTask, updateTaskStatus } = useOperations();
   const [filterPriority, setFilterPriority] = useState<string>('all');
@@ -29,25 +48,6 @@ export default function VolunteerTasks() {
   const [category, setCategory] = useState<VolunteerTask['category']>('info');
   const [zoneId, setZoneId] = useState('zone-concourse');
   const [eta, setEta] = useState(10);
-
-  const getPriorityColor = (prio: TaskPriority) => {
-    switch (prio) {
-      case 'low': return 'bg-neutral-800 text-neutral-400 border-neutral-750';
-      case 'medium': return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
-      case 'high': return 'bg-orange-500/10 text-orange-400 border-orange-500/20';
-      case 'critical': return 'bg-red-500/15 text-red-400 border-red-500/30 animate-pulse';
-    }
-  };
-
-  const getCategoryIcon = (cat: VolunteerTask['category']) => {
-    switch (cat) {
-      case 'accessibility': return <Accessibility className="w-3.5 h-3.5 text-blue-400" />;
-      case 'crowd': return <Flame className="w-3.5 h-3.5 text-orange-400" />;
-      case 'medical': return <AlertCircle className="w-3.5 h-3.5 text-red-400" />;
-      case 'info': return <Info className="w-3.5 h-3.5 text-indigo-400" />;
-      case 'facility': return <Wrench className="w-3.5 h-3.5 text-emerald-400" />;
-    }
-  };
 
   const handleGenerateAiTask = () => {
     // Dynamically generate an AI task based on current telemetry

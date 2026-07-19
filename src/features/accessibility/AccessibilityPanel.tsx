@@ -18,6 +18,14 @@ interface AccessibilityPanelProps {
   setMapRouteType: (type: 'none' | 'wheelchair' | 'family' | 'senior' | 'vision') => void;
 }
 
+const routeOptions = [
+  { id: 'none', label: 'Standard Route', icon: Users, color: 'text-neutral-400' },
+  { id: 'wheelchair', label: 'Wheelchair Ramp Path', icon: Accessibility, color: 'text-blue-400' },
+  { id: 'family', label: 'Family & Stroller Path', icon: Baby, color: 'text-emerald-400' },
+  { id: 'senior', label: 'Senior Citizen Path (No Stairs)', icon: Heart, color: 'text-amber-400' },
+  { id: 'vision', label: 'Low Vision Guided Path', icon: Eye, color: 'text-purple-400' }
+] as const;
+
 export default function AccessibilityPanel({ mapRouteType, setMapRouteType }: AccessibilityPanelProps) {
   const { 
     settings, 
@@ -27,14 +35,6 @@ export default function AccessibilityPanel({ mapRouteType, setMapRouteType }: Ac
     setAudioReader,
     setAccessibilityMode
   } = useSettings();
-
-  const routeOptions = [
-    { id: 'none', label: 'Standard Route', icon: Users, color: 'text-neutral-400' },
-    { id: 'wheelchair', label: 'Wheelchair Ramp Path', icon: Accessibility, color: 'text-blue-400' },
-    { id: 'family', label: 'Family & Stroller Path', icon: Baby, color: 'text-emerald-400' },
-    { id: 'senior', label: 'Senior Citizen Path (No Stairs)', icon: Heart, color: 'text-amber-400' },
-    { id: 'vision', label: 'Low Vision Guided Path', icon: Eye, color: 'text-purple-400' }
-  ] as const;
 
   return (
     <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5 shadow-lg space-y-6">
