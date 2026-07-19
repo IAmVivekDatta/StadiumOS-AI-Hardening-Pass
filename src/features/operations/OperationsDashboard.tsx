@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useOperations } from '../../context/OperationsContext';
 import { IncidentSeverity } from '../../types';
 import { sanitizeInput } from '../../services/securityUtils';
@@ -37,12 +37,12 @@ export default function OperationsDashboard() {
     return { totalCapacity: cap, totalCrowd: crowd, crowdPercentage: pct };
   }, [state.zones]);
 
-  const handleBroadcast = (e: React.FormEvent) => {
+  const handleBroadcast = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     if (!broadcastText.trim()) return;
     triggerEmergencyAlert(sanitizeInput(broadcastText));
     setBroadcastText('');
-  };
+  }, [broadcastText, triggerEmergencyAlert]);
 
   return (
     <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5 shadow-lg space-y-6">

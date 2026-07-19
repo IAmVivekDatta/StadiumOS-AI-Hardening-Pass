@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useOperations } from '../../context/OperationsContext';
 import { useSettings } from '../../context/SettingsContext';
 import { askGemini } from '../../services/geminiService';
@@ -46,7 +46,7 @@ export default function PredictionChart() {
   const [aiExplanation, setAiExplanation] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
-  const fetchAiExplanation = async () => {
+  const fetchAiExplanation = useCallback(async () => {
     setLoading(true);
     try {
       const prompt = `Perform an operational crowd forecast analysis on the following data:
@@ -73,7 +73,7 @@ Be concise and write in a professional operations commander style.`;
     } finally {
       setLoading(false);
     }
-  };
+  }, [state, settings]);
 
   return (
     <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5 shadow-lg space-y-4">

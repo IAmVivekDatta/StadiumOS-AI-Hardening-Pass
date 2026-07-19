@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useOperations } from '../../context/OperationsContext';
 import { useSettings } from '../../context/SettingsContext';
 import { askGemini } from '../../services/geminiService';
@@ -82,7 +82,11 @@ export default function AIChat({ onOpenSettings }: AIChatProps) {
     }
   }, [messages, settings.audioReader, settings.language]);
 
-  const handleSend = async (textToSend: string) => {
+  const handleLanguageChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    setLanguage(e.target.value);
+  }, [setLanguage]);
+
+  const handleSend = useCallback(async (textToSend: string) => {
     if (!textToSend.trim() || loading) return;
 
     const sanitized = sanitizeInput(textToSend);
@@ -116,7 +120,7 @@ export default function AIChat({ onOpenSettings }: AIChatProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [loading, state, settings]);
 
   return (
     <div className="bg-neutral-900 border border-neutral-800 rounded-xl flex flex-col h-[520px] shadow-lg overflow-hidden">
@@ -143,7 +147,7 @@ export default function AIChat({ onOpenSettings }: AIChatProps) {
             <Globe className="w-3.5 h-3.5 text-neutral-400" />
             <select
               value={settings.language}
-              onChange={(e) => setLanguage(e.target.value)}
+              onChange={handleLanguageChange}
               className="bg-transparent text-[10px] text-neutral-300 focus:outline-none cursor-pointer border-none font-medium"
               id="select-lang"
             >

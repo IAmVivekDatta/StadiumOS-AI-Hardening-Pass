@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useOperations } from '../../context/OperationsContext';
 import { VolunteerTask, TaskPriority } from '../../types';
 import { sanitizeInput } from '../../services/securityUtils';
@@ -49,7 +49,7 @@ export default function VolunteerTasks() {
   const [zoneId, setZoneId] = useState('zone-concourse');
   const [eta, setEta] = useState(10);
 
-  const handleGenerateAiTask = () => {
+  const handleGenerateAiTask = useCallback(() => {
     // Dynamically generate an AI task based on current telemetry
     const gateBWait = state.gates.find(g => g.id === 'gate-b')?.waitTime || 0;
     const criticalZones = state.zones.filter(z => z.density === 'critical' || z.density === 'high');
@@ -96,9 +96,9 @@ export default function VolunteerTasks() {
       zoneId: aiZone,
       eta: aiEta
     });
-  };
+  }, [state.gates, state.zones, state.incidents, addTask]);
 
-  const handleCreateManual = (e: React.FormEvent) => {
+  const handleCreateManual = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !description.trim()) return;
     
@@ -115,7 +115,7 @@ export default function VolunteerTasks() {
     setTitle('');
     setDescription('');
     setShowCreateModal(false);
-  };
+  }, [title, description, priority, category, zoneId, eta, addTask]);
 
   const filteredTasks = useMemo(() => {
     return state.tasks.filter((t) => {
